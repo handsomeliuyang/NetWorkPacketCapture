@@ -149,6 +149,9 @@ public class TcpProxyServer implements Runnable {
             localTunnel = TunnelFactory.wrap(localChannel, mSelector);
             short portKey = (short) localChannel.socket().getPort();
             InetSocketAddress destAddress = getDestAddress(localChannel);
+
+            VPNLog.d(TAG, "liuyang TCP Server listener " + portKey + ":" + destAddress.toString());
+
             if (destAddress != null) {
                 TcpTunnel remoteTunnel = TunnelFactory.createTunnelByConfig(destAddress, mSelector, portKey);
                 //关联兄弟

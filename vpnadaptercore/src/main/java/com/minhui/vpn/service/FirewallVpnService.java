@@ -228,25 +228,57 @@ public class FirewallVpnService extends VpnService implements Runnable {
         //矫正TCPHeader里的偏移量，使它指向真正的TCP数据地址
         tcpHeader.mOffset = ipHeader.getHeaderLength();
         if (tcpHeader.getSourcePort() == mTcpProxyServer.port) {
-            VPNLog.d(TAG, "process  tcp packet from net ");
-            NatSession session = NatSessionManager.getSession(tcpHeader.getDestinationPort());
+            VPNLog.d(TAG, "11111 LocalTcpServer to Net" + ipHeader.toString() + "; tcpHeader=" + tcpHeader.toString() + "; tcpDataSize="+(ipHeader.getDataLength() - tcpHeader.getHeaderLength()));
+
+            short portKey = tcpHeader.getDestinationPort();
+            NatSession session = NatSessionManager.getSession(portKey);
             if (session != null) {
                 ipHeader.setSourceIP(ipHeader.getDestinationIP());
                 tcpHeader.setSourcePort(session.remotePort);
                 ipHeader.setDestinationIP(LOCAL_IP);
 
                 CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
+
+                VPNLog.d(TAG, "change Dest:IP:Port" + ipHeader.toString() + "; tcpHeader=" + tcpHeader.toString());
                 mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
+
+                // liuyang if server-fin，remove session
+                if((tcpHeader.getFlag() & TCPHeader.FIN) == TCPHeader.FIN){
+                    VPNLog.d(TAG, "remove session; tcpHeader=" + tcpHeader.toString());
+                    NatSessionManager.removeSession(portKey);
+                }
+
                 mReceivedBytes += size;
             } else {
-                DebugLog.i("NoSession: %s %s\n", ipHeader.toString(), tcpHeader.toString());
+                DebugLog.i("Drop the packets. NoSession: %s %s\n", ipHeader.toString(), tcpHeader.toString());
             }
 
         } else {
-            VPNLog.d(TAG, "process  tcp packet to net ");
+            VPNLog.d(TAG, "22222 App to Net " + ipHeader.toString() + "; tcpHeader=" + tcpHeader.toString() + "; tcpDataSize="+(ipHeader.getDataLength() - tcpHeader.getHeaderLength()));
+
             //添加端口映射
             short portKey = tcpHeader.getSourcePort();
             NatSession session = NatSessionManager.getSession(portKey);
+
+            // liuyang 如果server已经释放了连接，但client还在发送ACK或Fin，则直接返回RST(连接重置报文)
+            if(session == null && ((tcpHeader.getFlag() & TCPHeader.SYN) != TCPHeader.SYN)){
+                // 生成RST包，发给Client
+                sendRSTPacket(mVPNOutputStream, mPacket, size);
+
+                // 如果是ACK包，就转发给TcpServer
+                if((tcpHeader.getFlag() & TCPHeader.ACK) == TCPHeader.ACK){
+                    ipHeader.setSourceIP(ipHeader.getDestinationIP());
+                    ipHeader.setDestinationIP(LOCAL_IP);
+                    tcpHeader.setDestinationPort(mTcpProxyServer.port);
+                    CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
+                    VPNLog.d(TAG, "change Dest:IP:Port " + ipHeader.toString() + "; tcpHeader=" + tcpHeader.toString());
+                    mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
+                }
+
+                hasWrite = true;
+                return hasWrite;
+            }
+
             if (session == null || session.remoteIP != ipHeader.getDestinationIP() || session.remotePort
                     != tcpHeader.getDestinationPort()) {
                 session = NatSessionManager.createSession(portKey, ipHeader.getDestinationIP(), tcpHeader
@@ -298,6 +330,8 @@ public class FirewallVpnService extends VpnService implements Runnable {
             tcpHeader.setDestinationPort(mTcpProxyServer.port);
 
             CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
+
+            VPNLog.d(TAG, "change Dest:IP:Port " + ipHeader.toString() + "; tcpHeader=" + tcpHeader.toString());
             mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
             //注意顺序
             session.bytesSent += tcpDataSize;
@@ -305,6 +339,34 @@ public class FirewallVpnService extends VpnService implements Runnable {
         }
         hasWrite = true;
         return hasWrite;
+    }
+
+    private void sendRSTPacket(FileOutputStream outputStream, byte[] packet, int size) throws IOException {
+        byte[] copyPacket = Arrays.copyOf(packet, packet.length);
+
+        IPHeader ipHeader = new IPHeader(copyPacket, 0);
+        TCPHeader tcpHeader  = new TCPHeader(copyPacket, ipHeader.getHeaderLength());
+
+        // 切换ip地址和端口号
+        int sourceIp = ipHeader.getSourceIP();
+        ipHeader.setSourceIP(ipHeader.getDestinationIP());
+        ipHeader.setDestinationIP(sourceIp);
+
+        short sourcePort = tcpHeader.getSourcePort();
+        tcpHeader.setSourcePort(tcpHeader.getDestinationPort());
+        tcpHeader.setDestinationPort(sourcePort);
+
+        // 修改Tcp的Flag为RST
+        tcpHeader.setFlag((byte) TCPHeader.RST);
+
+        // 修改SeqID为传递过来的ACK值
+        tcpHeader.setSeqID(tcpHeader.getAckID());
+        // 修改AckID为0
+        tcpHeader.setAckID(0);
+
+        CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
+        outputStream.write(ipHeader.mData, ipHeader.mOffset, size);
+        VPNLog.d(TAG, "33333 RST send to App " + ipHeader.toString() + "; tcpHeader=" + tcpHeader.toString());
     }
 
     private void waitUntilPrepared() {
@@ -323,7 +385,9 @@ public class FirewallVpnService extends VpnService implements Runnable {
     private ParcelFileDescriptor establishVPN() throws Exception {
         Builder builder = new Builder();
         builder.setMtu(MUTE_SIZE);
-        selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
+        // TODO-ly 方便测试，指定抓取的包名
+//        selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
+        selectPackage = "com.ly.studydemo";
         DebugLog.i("setMtu: %d\n", ProxyConfig.Instance.getMTU());
 
         ProxyConfig.IPAddress ipAddress = ProxyConfig.Instance.getDefaultLocalIP();

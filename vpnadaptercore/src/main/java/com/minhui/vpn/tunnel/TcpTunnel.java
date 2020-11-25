@@ -2,6 +2,7 @@ package com.minhui.vpn.tunnel;
 
 
 import com.minhui.vpn.KeyHandler;
+import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
 import com.minhui.vpn.service.FirewallVpnService;
@@ -67,6 +68,9 @@ public abstract class TcpTunnel implements KeyHandler {
 
     @Override
     public void onKeyReady(SelectionKey key) {
+
+        VPNLog.d(this.getClass().getName(), "liuyang onKeyReady: isReadable=" + key.isReadable() + "; isWritable=" + key.isWritable() + "; isConnectable=" + key.isConnectable());
+
         if (key.isReadable()) {
             onReadable(key);
         } else if (key.isWritable()) {
@@ -139,6 +143,9 @@ public abstract class TcpTunnel implements KeyHandler {
     }
 
     public void onReadable(SelectionKey key) {
+
+        VPNLog.d(this.getClass().getName(), "liuyang onReadable: " + mServerEP);
+
         try {
             ByteBuffer buffer = ByteBuffer.allocate(FirewallVpnService.MUTE_SIZE);
             buffer.clear();
@@ -151,7 +158,7 @@ public abstract class TcpTunnel implements KeyHandler {
                 sendToBrother(key, buffer);
 
             } else if (bytesRead < 0) {
-
+                VPNLog.d(this.getClass().getName(), "onReadable: bytesRead=-1, this channel is not yet connected");
                 this.dispose();
             }
         } catch (Exception ex) {
@@ -171,7 +178,6 @@ public abstract class TcpTunnel implements KeyHandler {
             //发送之前，先让子类处理，例如做加密等。
             //    mBrotherTunnel.beforeSend(buffer);
             mBrotherTunnel.getWriteDataFromBrother(buffer);
-
         }
     }
 
@@ -215,6 +221,9 @@ public abstract class TcpTunnel implements KeyHandler {
 
 
     public void onWritable(SelectionKey key) {
+
+        VPNLog.d(this.getClass().getName(), "liuyang onWritable: " + mServerEP);
+
         try {
             //发送之前，先让子类处理，例如做加密等
             ByteBuffer mSendRemainBuffer = needWriteData.poll();
@@ -253,6 +262,8 @@ public abstract class TcpTunnel implements KeyHandler {
     }
 
     void disposeInternal(boolean disposeBrother) {
+        VPNLog.d(this.getClass().getName(), "close Channel *******");
+
         if (!mDisposed) {
             try {
                 mInnerChannel.close();
@@ -275,7 +286,8 @@ public abstract class TcpTunnel implements KeyHandler {
             sessionCount--;
 
             onDispose();
-            NatSessionManager.removeSession(portKey);
+            // liuyang 改到vpn拦截层移除session
+//            NatSessionManager.removeSession(portKey);
         }
     }
 

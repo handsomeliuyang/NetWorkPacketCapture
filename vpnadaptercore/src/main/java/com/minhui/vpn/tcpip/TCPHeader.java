@@ -81,6 +81,10 @@ public class TCPHeader {
 		return mData[mOffset + offset_flag];
 	}
 
+	public void setFlag(byte flags){
+		mData[mOffset + offset_flag] = flags;
+	}
+
 	public short getCrc() {
 		return CommonMethods.readShort(mData, mOffset + offset_crc);
 	}
@@ -93,8 +97,15 @@ public class TCPHeader {
 		return CommonMethods.readInt(mData, mOffset + offset_seq);
 	}
 
+	public void setSeqID(int seqID) {
+		CommonMethods.writeInt(mData, mOffset + offset_seq, seqID);
+	}
+
 	public int getAckID() {
 		return CommonMethods.readInt(mData, mOffset + offset_ack);
+	}
+	public void setAckID(int ackID){
+		CommonMethods.writeInt(mData, mOffset + offset_ack, ackID);
 	}
 
 	@Override
