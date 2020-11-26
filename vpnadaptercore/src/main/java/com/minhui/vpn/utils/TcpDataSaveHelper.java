@@ -28,6 +28,17 @@ public class TcpDataSaveHelper {
         this.dir = dir;
     }
 
+    @Override
+    public String toString() {
+        return "TcpDataSaveHelper{" +
+                "dir='" + dir + '\'' +
+                ", lastSaveData=" + lastSaveData +
+                ", lastSaveFile=" + lastSaveFile +
+                ", requestNum=" + requestNum +
+                ", responseNum=" + responseNum +
+                '}';
+    }
+
     public void addData(final SaveData data) {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override

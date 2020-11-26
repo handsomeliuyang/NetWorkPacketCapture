@@ -17,6 +17,7 @@ import java.io.File;
 import java.net.DatagramSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -90,9 +91,21 @@ public class VpnServiceHelper {
             sVpnService.setVpnRunningStatus(stopStatus);
         }
     }
+
     public static List<NatSession> getAllSession() {
         if (FirewallVpnService.lastVpnStartTimeFormat == null) {
-            return null;
+
+            // 从文件夹中，获取上次Vpn启动时间
+            File configDir = new File(VPNConstants.CONFIG_DIR);
+            if(!configDir.exists()) {
+                return null;
+            }
+            File[] files = configDir.listFiles();
+            if(files.length == 0) {
+                return null;
+            }
+            Arrays.sort(files);
+            FirewallVpnService.lastVpnStartTimeFormat = files[files.length-1].getName();
         }
         try {
             File file = new File(VPNConstants.CONFIG_DIR +FirewallVpnService. lastVpnStartTimeFormat);

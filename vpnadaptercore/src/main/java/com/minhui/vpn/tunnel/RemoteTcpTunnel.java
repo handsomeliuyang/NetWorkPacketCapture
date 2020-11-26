@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.minhui.vpn.VPNConstants;
+import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
 import com.minhui.vpn.processparse.PortHostService;
@@ -39,6 +40,7 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
         helper = new TcpDataSaveHelper(helperDir);
         handler = new Handler(Looper.getMainLooper());
 
+        VPNLog.d(this.getClass().getSimpleName(), "***** Save helper " + helper.toString());
     }
 
 
