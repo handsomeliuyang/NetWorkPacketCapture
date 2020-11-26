@@ -94,18 +94,18 @@ public class VpnServiceHelper {
 
     public static List<NatSession> getAllSession() {
         if (FirewallVpnService.lastVpnStartTimeFormat == null) {
-
-            // 从文件夹中，获取上次Vpn启动时间
-            File configDir = new File(VPNConstants.CONFIG_DIR);
-            if(!configDir.exists()) {
-                return null;
-            }
-            File[] files = configDir.listFiles();
-            if(files.length == 0) {
-                return null;
-            }
-            Arrays.sort(files);
-            FirewallVpnService.lastVpnStartTimeFormat = files[files.length-1].getName();
+            return null;
+//            // 从文件夹中，获取上次Vpn启动时间
+//            File configDir = new File(VPNConstants.CONFIG_DIR);
+//            if(!configDir.exists()) {
+//                return null;
+//            }
+//            File[] files = configDir.listFiles();
+//            if(files.length == 0) {
+//                return null;
+//            }
+//            Arrays.sort(files);
+//            FirewallVpnService.lastVpnStartTimeFormat = files[files.length-1].getName();
         }
         try {
             File file = new File(VPNConstants.CONFIG_DIR +FirewallVpnService. lastVpnStartTimeFormat);
