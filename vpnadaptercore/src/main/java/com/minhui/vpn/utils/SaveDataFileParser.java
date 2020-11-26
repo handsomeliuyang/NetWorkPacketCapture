@@ -29,6 +29,7 @@ public class SaveDataFileParser {
     private static final int HEADER_LIMIT = 256 * 1024;
     private static final String CONTENT_ENCODING = "Content-Encoding";
     private static final String CONTENT_TYPE = "Content-Type";
+    private static final String TRANSFER_ENCODING = "Transfer-Encoding";
     private static final String GZIP = "gzip";
     private static final String IMAGE = "image";
     private static final String URLENCODED = "urlencoded";
@@ -43,6 +44,7 @@ public class SaveDataFileParser {
         try {
             String encodingType = null;
             String contentType = null;
+            boolean isChunked = false;
             long headerLimit = HEADER_LIMIT;
             String name = childFile.getName();
             ShowData showData = new ShowData();
@@ -62,14 +64,23 @@ public class SaveDataFileParser {
                 if (CONTENT_TYPE.equalsIgnoreCase(split[0])) {
                     contentType = split[1];
                 }
+                if(TRANSFER_ENCODING.equalsIgnoreCase(split[0]) && "chunked".equalsIgnoreCase(split[1].trim())){
+                    isChunked = true;
+                }
                 headBuilder.append(line).append("\n");
                 line = buffer.readUtf8LineStrict(headerLimit);
             }
             showData.headStr = headBuilder.toString();
 
+            // 处理分块的内容
+            if(isChunked) {
+                ChunkedSource chunkedSource = new ChunkedSource(buffer);
+                buffer = Okio.buffer(chunkedSource);
+            }
+
             if (encodingType != null) {
                 String s = encodingType.toLowerCase();
-                if (s.equals(GZIP)) {
+                if (s.trim().equals(GZIP)) {
                     showData.bodyStr = getGzipStr(buffer);
                     return showData;
                 }
@@ -133,6 +144,7 @@ public class SaveDataFileParser {
             VPNLog.d(TAG, "s is" + s);
             return s;
         } catch (IOException e) {
+            VPNLog.w(TAG, "*****failed to getGzipStr", e);
             try {
                 if (bytes != null) {
                     String showStr = new String(bytes, 0, bytes.length);
