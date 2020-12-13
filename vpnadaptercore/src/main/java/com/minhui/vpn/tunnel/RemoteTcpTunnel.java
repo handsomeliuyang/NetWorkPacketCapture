@@ -45,8 +45,8 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
 
 
     @Override
-    protected void afterReceived(ByteBuffer buffer) throws Exception {
-        super.afterReceived(buffer);
+    protected ByteBuffer afterReceived(ByteBuffer buffer) throws Exception {
+        buffer = super.afterReceived(buffer);
         refreshSessionAfterRead(buffer.limit());
         TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
                 .SaveData
@@ -58,11 +58,12 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
                 .build();
         helper.addData(saveData);
 
+        return buffer;
     }
 
     @Override
-    protected void beforeSend(ByteBuffer buffer) throws Exception {
-        super.beforeSend(buffer);
+    protected ByteBuffer beforeSend(ByteBuffer buffer) throws Exception {
+        buffer = super.beforeSend(buffer);
         TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
                 .SaveData
                 .Builder()
@@ -74,6 +75,7 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
         helper.addData(saveData);
         refreshAppInfo();
 
+        return buffer;
     }
 
     private void refreshAppInfo() {

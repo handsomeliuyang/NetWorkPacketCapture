@@ -7,19 +7,31 @@ import android.content.SharedPreferences;
 
 
 import com.minhui.vpn.VPNConstants;
+import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.processparse.PortHostService;
 import com.minhui.vpn.service.FirewallVpnService;
+import com.minhui.vpn.ssl.Authority;
+import com.minhui.vpn.ssl.CertificateHelper;
 import com.minhui.vpn.tcpip.IPHeader;
 import com.minhui.vpn.tcpip.UDPHeader;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
 
 /**
  * Created by zengzheying on 16/1/12.
@@ -30,11 +42,31 @@ public class VpnServiceHelper {
     private static FirewallVpnService sVpnService;
     private static SharedPreferences sp;
 
+    private static Certificate caCert;
+    private static PrivateKey caPrivKey;
+
     public static void onVpnServiceCreated(FirewallVpnService vpnService) {
         sVpnService = vpnService;
         if(context==null){
             context=vpnService.getApplicationContext();
         }
+
+        if(caCert == null) {
+            try {
+                KeyStore ks = CertificateHelper.loadAssetKeyStore(context, "ca.p12", "123456");
+                caCert = ks.getCertificate("ca");
+                caPrivKey = (PrivateKey) ks.getKey("ca", "123456".toCharArray());
+            } catch (Exception e) {
+                VPNLog.w("VpnServiceHelper", "load ca cert fails ", e);
+            }
+        }
+    }
+
+    public static Certificate getCaCert(){
+        return caCert;
+    }
+    public static PrivateKey getCaPrivKey(){
+        return caPrivKey;
     }
 
     public static void onVpnServiceDestroy() {

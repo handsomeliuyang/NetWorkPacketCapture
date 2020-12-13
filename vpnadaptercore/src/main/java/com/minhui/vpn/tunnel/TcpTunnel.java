@@ -19,6 +19,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import javax.net.ssl.SSLEngine;
+
 /**
  * Created by zengzheying on 15/12/29.
  */
@@ -30,7 +32,7 @@ public abstract class TcpTunnel implements KeyHandler {
      * 自己的Channel
      */
 
-    private SocketChannel mInnerChannel;
+    protected SocketChannel mInnerChannel;
     /**
      * 发送数据缓存
      */
@@ -44,7 +46,7 @@ public abstract class TcpTunnel implements KeyHandler {
      * 与外网的通信两个Tunnel负责，一个负责Apps与TCP代理服务器的通信，一个负责TCP代理服务器
      * 与外网服务器的通信，Apps与外网服务器的数据交换靠这两个Tunnel来进行
      */
-    private TcpTunnel mBrotherTunnel;
+    protected TcpTunnel mBrotherTunnel;
     private boolean mDisposed;
     private InetSocketAddress mServerEP;
     short portKey;
@@ -90,9 +92,9 @@ public abstract class TcpTunnel implements KeyHandler {
 
     protected abstract boolean isTunnelEstablished();
 
-    protected abstract void beforeSend(ByteBuffer buffer) throws Exception;
+    protected abstract ByteBuffer beforeSend(ByteBuffer buffer) throws Exception;
 
-    protected abstract void afterReceived(ByteBuffer buffer) throws Exception;
+    protected abstract ByteBuffer afterReceived(ByteBuffer buffer) throws Exception;
 
     protected abstract void onDispose();
 
@@ -133,7 +135,7 @@ public abstract class TcpTunnel implements KeyHandler {
         }
     }
 
-    protected void beginReceived() throws Exception {
+    protected void beginReceived(SSLEngine engine) throws Exception {
         if (mInnerChannel.isBlocking()) {
             mInnerChannel.configureBlocking(false);
         }
@@ -153,7 +155,7 @@ public abstract class TcpTunnel implements KeyHandler {
             if (bytesRead > 0) {
                 buffer.flip();
                 //先让子类处理，例如解密数据
-                afterReceived(buffer);
+                buffer = afterReceived(buffer);
 
                 sendToBrother(key, buffer);
 
@@ -207,7 +209,7 @@ public abstract class TcpTunnel implements KeyHandler {
 
     protected int write(ByteBuffer buffer) throws Exception {
         int byteSendSum = 0;
-        beforeSend(buffer);
+        buffer = beforeSend(buffer);
         while (buffer.hasRemaining()) {
             int byteSent = mInnerChannel.write(buffer);
             byteSendSum += byteSent;
@@ -252,9 +254,9 @@ public abstract class TcpTunnel implements KeyHandler {
         }
     }
 
-    protected void onTunnelEstablished() throws Exception {
-        this.beginReceived(); //开始接收数据
-        mBrotherTunnel.beginReceived(); //兄弟也开始接收数据吧
+    protected void onTunnelEstablished(SSLEngine engine) throws Exception {
+        this.beginReceived(null); //开始接收数据
+        mBrotherTunnel.beginReceived(engine); //兄弟也开始接收数据吧
     }
 
     public void dispose() {
