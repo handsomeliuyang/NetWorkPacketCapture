@@ -5,6 +5,7 @@ import android.os.Looper;
 
 import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.VPNLog;
+import com.minhui.vpn.http.HttpRequestHeaderParser;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
 import com.minhui.vpn.processparse.PortHostService;
@@ -63,6 +64,12 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
 
     @Override
     protected ByteBuffer beforeSend(ByteBuffer buffer) throws Exception {
+
+        // 如果是Https请求，只有ssl握手成功后，且解密后，才能得到请求的url
+        if(session.isHttpsSession) {
+            HttpRequestHeaderParser.parseHttpsHostAndRequestUrl(session, buffer.array());
+        }
+
         TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
                 .SaveData
                 .Builder()

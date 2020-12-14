@@ -51,6 +51,16 @@ public class HttpRequestHeaderParser {
         }
     }
 
+    public static void parseHttpsHostAndRequestUrl(NatSession session, byte[] buffer) {
+        String headerString = new String(buffer);
+        String[] headerLines = headerString.split("\\r\\n");
+        String host = getHttpHost(headerLines);
+        if (!TextUtils.isEmpty(host)) {
+            session.remoteHost = host;
+        }
+        paresRequestLine(session, headerLines[0]);
+    }
+
     public static void getHttpHostAndRequestUrl(NatSession session, byte[] buffer, int offset, int count) {
         session.isHttp = true;
         session.isHttpsSession = false;
@@ -84,6 +94,8 @@ public class HttpRequestHeaderParser {
     }
 
     public static void paresRequestLine(NatSession session, String requestLine) {
+        String scheme = session.isHttp ? "http" : "https";
+
         String[] parts = requestLine.trim().split(" ");
         if (parts.length == 3) {
             session.method = parts[0];
@@ -91,13 +103,13 @@ public class HttpRequestHeaderParser {
             session.pathUrl = url;
             if (url.startsWith("/")) {
                 if (session.remoteHost != null) {
-                    session.requestUrl = "http://" + session.remoteHost + url;
+                    session.requestUrl = scheme + "://" + session.remoteHost + url;
                 }
             } else {
-                if (session.requestUrl.startsWith("http")) {
+                if (session.requestUrl.startsWith(scheme)) {
                     session.requestUrl = url;
                 } else {
-                    session.requestUrl = "http://" + url;
+                    session.requestUrl = scheme + "://" + url;
                 }
 
             }
