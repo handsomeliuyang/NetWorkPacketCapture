@@ -63,7 +63,6 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
 
     @Override
     protected ByteBuffer beforeSend(ByteBuffer buffer) throws Exception {
-        buffer = super.beforeSend(buffer);
         TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
                 .SaveData
                 .Builder()
@@ -74,6 +73,9 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
                 .build();
         helper.addData(saveData);
         refreshAppInfo();
+
+        // 先保存再加密
+        buffer = super.beforeSend(buffer);
 
         return buffer;
     }

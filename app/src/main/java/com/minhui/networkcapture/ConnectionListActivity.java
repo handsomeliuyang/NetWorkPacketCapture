@@ -166,9 +166,9 @@ public class ConnectionListActivity extends Activity {
             connectionHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (baseNetSessions.get(position).isHttpsSession()) {
-                        return;
-                    }
+//                    if (baseNetSessions.get(position).isHttpsSession()) {
+//                        return;
+//                    }
                     startPacketDetailActivity(baseNetSessions.get(position));
 
 

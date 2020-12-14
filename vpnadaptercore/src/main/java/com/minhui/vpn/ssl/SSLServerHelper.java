@@ -3,12 +3,8 @@ package com.minhui.vpn.ssl;
 import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.utils.VpnServiceHelper;
 
-import org.bouncycastle.operator.OperatorCreationException;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -51,9 +47,7 @@ public class SSLServerHelper extends NioSslPeer {
         context = CertificateHelper.newServerContext(keyManagers);
 
         SSLSession dummySession = context.createSSLEngine().getSession();
-        myAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
         myNetData = ByteBuffer.allocate(dummySession.getPacketBufferSize());
-        peerAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
         peerNetData = ByteBuffer.allocate(dummySession.getPacketBufferSize());
         dummySession.invalidate();
     }
@@ -84,9 +78,7 @@ public class SSLServerHelper extends NioSslPeer {
     }
 
     public void stop() {
-//        active = false;
         executor.shutdown();
-//        selector.wakeup();
     }
 
     public boolean doHandshake(SocketChannel socketChannel) throws Exception {
@@ -96,13 +88,6 @@ public class SSLServerHelper extends NioSslPeer {
         engine.setUseClientMode(false);
         engine.beginHandshake();
         return doHandshake(socketChannel, engine);
-
-//        if (doHandshake(socketChannel, engine)) {
-//            socketChannel.register(selector, SelectionKey.OP_READ, engine);
-//        } else {
-//            socketChannel.close();
-//            VPNLog.d(TAG, "Connection closed due to handshake failure.");
-//        }
     }
 
     public SSLEngine getEngine() {

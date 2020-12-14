@@ -96,9 +96,9 @@ public class CaptureFragment extends BaseFragment {
                     return;
                 }
                 NatSession connection = allNetConnection.get(position);
-                if (connection.isHttpsSession) {
-                    return;
-                }
+//                if (connection.isHttpsSession) {
+//                    return;
+//                }
                 if (!NatSession.TCP.equals(connection.type)) {
                     return;
                 }

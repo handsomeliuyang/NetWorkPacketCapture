@@ -1,26 +1,16 @@
 package com.minhui.vpn.ssl;
 
-import android.content.Context;
-import android.content.res.AssetManager;
-
 import com.minhui.vpn.VPNLog;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 public abstract class NioSslPeer {
 
@@ -28,15 +18,9 @@ public abstract class NioSslPeer {
 
     public static final int BUFFER_SIZE = 2560;
 
-    protected ByteBuffer myAppData;
     protected ByteBuffer myNetData;
-    protected ByteBuffer peerAppData;
     protected ByteBuffer peerNetData;
     protected ExecutorService executor = Executors.newSingleThreadExecutor();
-
-//    protected abstract void read(SocketChannel socketChannel, SSLEngine engine) throws Exception;
-//
-//    protected abstract void write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception;
 
     protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws IOException {
         SSLEngineResult result;
@@ -210,45 +194,45 @@ public abstract class NioSslPeer {
         }
     }
 
-    protected void closeConnection(SocketChannel socketChannel, SSLEngine engine) throws IOException {
-        engine.closeOutbound();
-        doHandshake(socketChannel, engine);
-        socketChannel.close();
-    }
+//    protected void closeConnection(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+//        engine.closeOutbound();
+//        doHandshake(socketChannel, engine);
+//        socketChannel.close();
+//    }
 
-    protected void handleEndOfStream(SocketChannel socketChannel, SSLEngine engine) throws IOException {
-        try {
-            engine.closeInbound();
-        } catch (Exception e) {
-            VPNLog.d(TAG,"This engine was forced to close inbound, without having received the proper SSL/TLS close notification message from the peer, due to end of stream.");
-        }
-        closeConnection(socketChannel, engine);
-    }
+//    protected void handleEndOfStream(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+//        try {
+//            engine.closeInbound();
+//        } catch (Exception e) {
+//            VPNLog.d(TAG,"This engine was forced to close inbound, without having received the proper SSL/TLS close notification message from the peer, due to end of stream.");
+//        }
+//        closeConnection(socketChannel, engine);
+//    }
 
-    protected KeyStore loadKeyStore(Context context, String assetsName, String keystorePassword) throws Exception {
-        AssetManager am = context.getAssets();
+//    protected KeyStore loadKeyStore(Context context, String assetsName, String keystorePassword) throws Exception {
+//        AssetManager am = context.getAssets();
+//
+//        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+//        InputStream keyStoreIS = am.open(assetsName);
+//        try {
+//            keyStore.load(keyStoreIS, keystorePassword.toCharArray());
+//        } finally {
+//            if (keyStoreIS != null) {
+//                keyStoreIS.close();
+//            }
+//        }
+//        return keyStore;
+//    }
 
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        InputStream keyStoreIS = am.open(assetsName);
-        try {
-            keyStore.load(keyStoreIS, keystorePassword.toCharArray());
-        } finally {
-            if (keyStoreIS != null) {
-                keyStoreIS.close();
-            }
-        }
-        return keyStore;
-    }
-
-    protected KeyManager[] createKeyManagers(KeyStore keyStore, String keyPassword) throws Exception {
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(keyStore, keyPassword.toCharArray());
-        return kmf.getKeyManagers();
-    }
-
-    protected TrustManager[] createTrustManagers(KeyStore trustStore) throws Exception {
-        TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustFactory.init(trustStore);
-        return trustFactory.getTrustManagers();
-    }
+//    protected KeyManager[] createKeyManagers(KeyStore keyStore, String keyPassword) throws Exception {
+//        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+//        kmf.init(keyStore, keyPassword.toCharArray());
+//        return kmf.getKeyManagers();
+//    }
+//
+//    protected TrustManager[] createTrustManagers(KeyStore trustStore) throws Exception {
+//        TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+//        trustFactory.init(trustStore);
+//        return trustFactory.getTrustManagers();
+//    }
 }
