@@ -1,12 +1,20 @@
 package com.minhui.vpn.utils;
 
+import android.net.Uri;
+
 import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.utils.ThreadProxy;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author minhui.zhu
@@ -76,6 +84,15 @@ public class TcpDataSaveHelper {
         }
     }
 
+    private File fileName(String namePre, boolean isRequest){
+        File file = new File(dir);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        String childName = Uri.encode(namePre) + "_" + (isRequest ? REQUEST : RESPONSE);
+        return new File(file, childName);
+    }
+
     private void newFileAndSaveData(SaveData data) {
         int saveNum;
         if (data.isRequest) {
@@ -85,12 +102,7 @@ public class TcpDataSaveHelper {
             saveNum = responseNum;
             responseNum++;
         }
-        File file = new File(dir);
-        if (!file.exists()) {
-            file.mkdirs();
-        }
-        String childName = (data.isRequest ? REQUEST : RESPONSE) + saveNum;
-        lastSaveFile = new File(file, childName);
+        lastSaveFile = fileName(data.namePre, data.isRequest);
         FileOutputStream fileOutputStream = null;
 
         try {
@@ -105,18 +117,48 @@ public class TcpDataSaveHelper {
 
     }
 
+    public boolean existResponse(SaveData saveData) {
+        File responseFile = fileName(saveData.namePre, false);
+        return responseFile.exists();
+    }
+
+    public ByteBuffer loadCashedResponse(SaveData saveData) {
+        File responseFile = fileName(saveData.namePre, false);
+        RandomAccessFile aFile = null;
+        try {
+            aFile = new RandomAccessFile(responseFile, "r");
+            FileChannel inChannel = aFile.getChannel();
+            ByteBuffer buf = ByteBuffer.allocate((int) inChannel.size() + 5);
+            inChannel.read(buf);
+            return buf;
+        } catch (Exception e) {
+            VPNLog.w(TAG, "failed to loadCashedResponse", e);
+            return null;
+        } finally {
+            if(aFile != null) {
+                try {
+                    aFile.close();
+                } catch (IOException e) {
+                    VPNLog.w(TAG, "failed to close", e);
+                }
+            }
+        }
+    }
+
 
     public static class SaveData {
         boolean isRequest;
         byte[] needParseData;
         int offSet;
         int playoffSize;
+        String namePre;
 
         private SaveData(Builder builder) {
             isRequest = builder.isRequest;
             needParseData = builder.needParseData;
             offSet = builder.offSet;
             playoffSize = builder.length;
+            namePre = builder.namePre;
         }
 
 
@@ -125,6 +167,7 @@ public class TcpDataSaveHelper {
             private byte[] needParseData;
             private int offSet;
             private int length;
+            private String namePre;
 
             public Builder() {
             }
@@ -146,6 +189,11 @@ public class TcpDataSaveHelper {
 
             public Builder length(int val) {
                 length = val;
+                return this;
+            }
+
+            public Builder namePre(String val){
+                namePre = val;
                 return this;
             }
 
