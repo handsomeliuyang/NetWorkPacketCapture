@@ -2,7 +2,11 @@ package com.minhui.vpn.utils;
 
 import android.net.Uri;
 
+import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.VPNLog;
+import com.minhui.vpn.nat.NatSession;
+import com.minhui.vpn.processparse.AppInfo;
+import com.minhui.vpn.processparse.PortHostService;
 import com.minhui.vpn.utils.ThreadProxy;
 
 import java.io.Closeable;
@@ -11,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
@@ -89,7 +94,7 @@ public class TcpDataSaveHelper {
         if (!file.exists()) {
             file.mkdirs();
         }
-        String childName = Uri.encode(namePre) + "_" + (isRequest ? REQUEST : RESPONSE);
+        String childName = namePre + "_" + (isRequest ? REQUEST : RESPONSE);
         return new File(file, childName);
     }
 
@@ -144,7 +149,6 @@ public class TcpDataSaveHelper {
             }
         }
     }
-
 
     public static class SaveData {
         boolean isRequest;

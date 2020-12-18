@@ -12,13 +12,16 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.minhui.vpn.ProxyConfig;
+import com.minhui.vpn.http.HttpCachManager;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.processparse.AppInfo;
+import com.minhui.vpn.service.FirewallVpnService;
 import com.minhui.vpn.utils.ThreadProxy;
 import com.minhui.vpn.utils.TimeFormatUtil;
 import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.utils.VpnServiceHelper;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimerTask;
@@ -58,7 +61,8 @@ public class CaptureFragment extends BaseFragment {
     private ListView channelList;
 
 
-    private List<NatSession> allNetConnection;
+//    private List<NatSession> allNetConnection;
+    private List<HttpCachManager.HttpData> httpDataList;
     private Context context;
 
     @Override
@@ -89,24 +93,22 @@ public class CaptureFragment extends BaseFragment {
         channelList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (allNetConnection == null) {
+                if (httpDataList == null) {
                     return;
                 }
-                if (position > allNetConnection.size() - 1) {
+                if (position > httpDataList.size() - 1) {
                     return;
                 }
-                NatSession connection = allNetConnection.get(position);
+                HttpCachManager.HttpData httpData = httpDataList.get(position);
 //                if (connection.isHttpsSession) {
 //                    return;
 //                }
-                if (!NatSession.TCP.equals(connection.type)) {
-                    return;
-                }
+//                if (!NatSession.TCP.equals(connection.type)) {
+//                    return;
+//                }
                 String dir = VPNConstants.DATA_DIR
-                        + TimeFormatUtil.formatYYMMDDHHMMSS(connection.vpnStartTime)
-                        + "/"
-                        + connection.getUniqueName();
-                PacketDetailActivity.startActivity(getActivity(), dir);
+                        + TimeFormatUtil.formatYYMMDDHHMMSS(httpData.getVpnStartTime());
+                PacketDetailActivity.startActivity(getActivity(), dir, httpData.getUniqueName());
             }
         });
        /* LocalBroadcastManager.getInstance(getContext()).registerReceiver(vpnStateReceiver,
@@ -124,54 +126,60 @@ public class CaptureFragment extends BaseFragment {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                allNetConnection = VpnServiceHelper.getAllSession();
-                if (allNetConnection == null) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            refreshView(allNetConnection);
-                        }
-                    });
-                    return;
+                httpDataList = null;
+                if (FirewallVpnService.lastVpnStartTimeFormat != null) {
+                    String fileDir = VPNConstants.CONFIG_DIR + FirewallVpnService.lastVpnStartTimeFormat;
+                    httpDataList = HttpCachManager.loadHttpData(fileDir);
                 }
-                Iterator<NatSession> iterator = allNetConnection.iterator();
-                String packageName = context.getPackageName();
 
-                SharedPreferences sp = getContext().getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
-                boolean isShowUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
-                String selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
-                while (iterator.hasNext()) {
-                    NatSession next = iterator.next();
-                    if (next.bytesSent == 0 && next.receiveByteNum == 0) {
-                        iterator.remove();
-                        continue;
-                    }
-                    if (NatSession.UDP.equals(next.type) && !isShowUDP) {
-                        iterator.remove();
-                        continue;
-                    }
-                    AppInfo appInfo = next.appInfo;
-
-                    if (appInfo != null) {
-                        String appPackageName = appInfo.pkgs.getAt(0);
-                        if (packageName.equals(appPackageName) ) {
-                            iterator.remove();
-                            continue;
-                        }
-                        if((selectPackage != null && !selectPackage.equals(appPackageName))){
-                            iterator.remove();
-                        }
-
-
-                    }
-                }
+//                allNetConnection = VpnServiceHelper.getAllSession();
+//                if (httpDataList == null) {
+//                    handler.post(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            refreshView(httpDataList);
+//                        }
+//                    });
+//                    return;
+//                }
+//                Iterator<NatSession> iterator = allNetConnection.iterator();
+//                String packageName = context.getPackageName();
+//
+//                SharedPreferences sp = getContext().getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
+//                boolean isShowUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
+//                String selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
+//                while (iterator.hasNext()) {
+//                    NatSession next = iterator.next();
+//                    if (next.bytesSent == 0 && next.receiveByteNum == 0) {
+//                        iterator.remove();
+//                        continue;
+//                    }
+//                    if (NatSession.UDP.equals(next.type) && !isShowUDP) {
+//                        iterator.remove();
+//                        continue;
+//                    }
+//                    AppInfo appInfo = next.appInfo;
+//
+//                    if (appInfo != null) {
+//                        String appPackageName = appInfo.pkgs.getAt(0);
+//                        if (packageName.equals(appPackageName) ) {
+//                            iterator.remove();
+//                            continue;
+//                        }
+//                        if((selectPackage != null && !selectPackage.equals(appPackageName))){
+//                            iterator.remove();
+//                        }
+//
+//
+//                    }
+//                }
                 if (handler == null) {
                     return;
                 }
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        refreshView(allNetConnection);
+                        refreshView(httpDataList);
                     }
                 });
             }
@@ -192,12 +200,12 @@ public class CaptureFragment extends BaseFragment {
         }, 1000, 1000, TimeUnit.MILLISECONDS);
     }
 
-    private void refreshView(List<NatSession> allNetConnection) {
+    private void refreshView(List<HttpCachManager.HttpData> httpDataList) {
         if (connectionAdapter == null) {
-            connectionAdapter = new ConnectionAdapter(context, allNetConnection);
+            connectionAdapter = new ConnectionAdapter(context, httpDataList);
             channelList.setAdapter(connectionAdapter);
         } else {
-            connectionAdapter.setNetConnections(allNetConnection);
+            connectionAdapter.setNetConnections(httpDataList);
             if (channelList.getAdapter() == null) {
                 channelList.setAdapter(connectionAdapter);
             }

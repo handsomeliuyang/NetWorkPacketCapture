@@ -6,6 +6,7 @@ import android.os.Looper;
 
 import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.VPNLog;
+import com.minhui.vpn.http.HttpCachManager;
 import com.minhui.vpn.http.HttpRequestHeaderParser;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
@@ -54,16 +55,33 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
     protected ByteBuffer afterReceived(ByteBuffer buffer) throws Exception {
         buffer = super.afterReceived(buffer);
         refreshSessionAfterRead(buffer.limit());
-        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
-                .SaveData
+//        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
+//                .SaveData
+//                .Builder()
+//                .namePre(namePre)
+//                .isRequest(false)
+//                .needParseData(buffer.array())
+//                .length(buffer.limit())
+//                .offSet(0)
+//                .build();
+
+        HttpCachManager.HttpData httpData = new HttpCachManager
+                .HttpData
                 .Builder()
-                .namePre(namePre)
-                .isRequest(false)
+                .requestUrl(session.requestUrl)
+                .ipAndPort(session.ipAndPort)
+                .localPort(session.localPort)
+                .vpnStartTime(session.vpnStartTime)
+                .isHttps(session.isHttpsSession)
+                .remoteHost(session.getRemoteHost())
+                .uniqueName(namePre)
                 .needParseData(buffer.array())
                 .length(buffer.limit())
-                .offSet(0)
+                .isRequest(false)
                 .build();
-        helper.addData(saveData);
+        HttpCachManager.saveHttpData(httpData);
+
+//        helper.addData(saveData);
         return buffer;
     }
 
@@ -74,21 +92,51 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
             HttpRequestHeaderParser.parseHttpsHostAndRequestUrl(session, buffer.array());
         }
 
-        namePre = session.getRequestUrl().split("\\?")[0]; // DATA_FORMAT.format(new Date());
-        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
-                .SaveData
-                .Builder()
-                .isRequest(true)
-                .namePre(namePre)
-                .needParseData(buffer.array())
-                .length(buffer.limit())
-                .offSet(0)
-                .build();
+        namePre = Uri.encode(session.getRequestUrl().split("\\?")[0]); // DATA_FORMAT.format(new Date());
+//        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
+//                .SaveData
+//                .Builder()
+//                .namePre(namePre)
+//                .isRequest(true)
+//                .needParseData(buffer.array())
+//                .length(buffer.limit())
+//                .offSet(0)
+//                .build();
+
+        // 保存请求的Request数据，用于显示详情
+//        helper.addData(saveData);
+        // 保存此Http请求的信息，用于列表显示
+        HttpCachManager.HttpData httpData = new HttpCachManager
+            .HttpData
+            .Builder()
+            .requestUrl(session.requestUrl)
+            .ipAndPort(session.ipAndPort)
+            .localPort(session.localPort)
+            .vpnStartTime(session.vpnStartTime)
+            .isHttps(session.isHttpsSession)
+            .remoteHost(session.getRemoteHost())
+            .uniqueName(namePre)
+            .needParseData(buffer.array())
+            .length(buffer.limit())
+            .isRequest(true)
+            .build();
 
         // 走本地缓存，本地加载Response，直接返回，不再向RemoteServer发送数据
-        if(helper.existResponse(saveData)) {
+//        if(helper.existResponse(saveData)) {
+//            // 加载本地response缓存，直接返回
+//            ByteBuffer responseBuffer = helper.loadCashedResponse(saveData);
+//            responseBuffer.flip();
+//            this.sendToBrother(null, responseBuffer);
+//
+//            VPNLog.d(this.getClass().getSimpleName(), "***** has response " + responseBuffer);
+//
+//            // 不再加密，也不发数据
+//            buffer.clear();
+//            return buffer;
+//        }
+        if(HttpCachManager.existResponse(httpData)){
             // 加载本地response缓存，直接返回
-            ByteBuffer responseBuffer = helper.loadCashedResponse(saveData);
+            ByteBuffer responseBuffer = HttpCachManager.loadCashedResponse(httpData);
             responseBuffer.flip();
             this.sendToBrother(null, responseBuffer);
 
@@ -98,8 +146,8 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
             buffer.clear();
             return buffer;
         }
+        HttpCachManager.saveHttpData(httpData);
 
-        helper.addData(saveData);
         refreshAppInfo();
         // 先保存再加密
         buffer = super.beforeSend(buffer);
@@ -130,32 +178,32 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
     @Override
     protected void onDispose() {
         super.onDispose();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                ThreadProxy.getInstance().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (session.receiveByteNum == 0 && session.bytesSent == 0) {
-                            return;
-                        }
-
-                        String configFileDir = VPNConstants.CONFIG_DIR
-                                +TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime) ;
-                        File parentFile = new File(configFileDir);
-                        if (!parentFile.exists()) {
-                            parentFile.mkdirs();
-                        }
-                        //说已经存了
-                        File file = new File(parentFile, session.getUniqueName());
-                        if (file.exists()) {
-                            return;
-                        }
-                        ACache configACache = ACache.get(parentFile);
-                        configACache.put(session.getUniqueName(), session);
-                    }
-                });
-            }
-        }, 1000);
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                ThreadProxy.getInstance().execute(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        if (session.receiveByteNum == 0 && session.bytesSent == 0) {
+//                            return;
+//                        }
+//
+//                        String configFileDir = VPNConstants.CONFIG_DIR
+//                                +TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime) ;
+//                        File parentFile = new File(configFileDir);
+//                        if (!parentFile.exists()) {
+//                            parentFile.mkdirs();
+//                        }
+//                        //说已经存了
+//                        File file = new File(parentFile, session.getUniqueName());
+//                        if (file.exists()) {
+//                            return;
+//                        }
+//                        ACache configACache = ACache.get(parentFile);
+//                        configACache.put(session.getUniqueName(), session);
+//                    }
+//                });
+//            }
+//        }, 1000);
     }
 }

@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 public class NatSession implements Serializable {
     public static final String TCP = "TCP";
-    public static final String UDP = "UPD";
+    public static final String UDP = "UDP";
     public String type;
     public String ipAndPort;
     public int remoteIP;
@@ -41,7 +41,7 @@ public class NatSession implements Serializable {
 
     public String getUniqueName() {
         String uinID = ipAndPort + connectionStartTime;
-        return String.valueOf(uinID.hashCode());
+        return type + uinID.hashCode();
     }
 
     public void refreshIpAndPort() {

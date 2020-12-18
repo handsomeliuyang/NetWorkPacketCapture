@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.minhui.vpn.VPNConstants;
+import com.minhui.vpn.http.HttpCachManager;
 import com.minhui.vpn.utils.SaveDataFileParser;
 import com.minhui.vpn.utils.ThreadProxy;
 
@@ -31,10 +32,13 @@ import java.util.List;
  */
 
 public class PacketDetailActivity extends Activity {
-    public static final String CONVERSATION_DATA = "conversation_data";
+    public static final String CONVERSATION_DIR = "conversation_dir";
+    public static final String CONVERSATION_UNIQUENAME = "conversation_uniqueName";
+
     private static final String TAG = "PacketDetailActivity";
     private ListView list;
     private String dir;
+    private String uniqueName;
     private SharedPreferences sp;
     private List<SaveDataFileParser.ShowData> showDataList;
     private ProgressBar pg;
@@ -44,7 +48,8 @@ public class PacketDetailActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.acitivity_packet_detail);
         list = (ListView) findViewById(R.id.detail_list);
-        dir = getIntent().getStringExtra(CONVERSATION_DATA);
+        dir = getIntent().getStringExtra(CONVERSATION_DIR);
+        uniqueName = getIntent().getStringExtra(CONVERSATION_UNIQUENAME);
         pg = findViewById(R.id.pg);
         sp = getSharedPreferences(AppConstants.DATA_SAVE, MODE_PRIVATE);
         sp.edit().putBoolean(AppConstants.HAS_FULL_USE_APP, true).apply();
@@ -55,35 +60,29 @@ public class PacketDetailActivity extends Activity {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                File file = new File(dir);
-                File[] files = file.listFiles();
-                if (files == null || files.length == 0) {
+
+                File requestFile = HttpCachManager.fileName(dir, uniqueName, true);
+                File responseFile = HttpCachManager.fileName(dir, uniqueName, false);
+                if(!requestFile.exists() && !responseFile.exists()) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             finish();
-
                         }
                     });
                     return;
                 }
-                List<File> filesList = new ArrayList<>();
-                for (File childFile : files) {
-                    filesList.add(childFile);
-                }
-                Collections.sort(filesList, new Comparator<File>() {
-                    @Override
-                    public int compare(File o1, File o2) {
-                        return (int) (o1.lastModified() - o2.lastModified());
-                    }
-                });
-                showDataList = new ArrayList<>();
-                for (File childFile : filesList) {
-                    SaveDataFileParser.ShowData showData = SaveDataFileParser.parseSaveFile(childFile);
-                    if (showData != null) {
-                        showDataList.add(showData);
-                    }
 
+                showDataList = new ArrayList<>();
+                // Request数据
+                SaveDataFileParser.ShowData requestData = SaveDataFileParser.parseSaveFile(requestFile);
+                if (requestData != null) {
+                    showDataList.add(requestData);
+                }
+                // Response数据
+                SaveDataFileParser.ShowData responseData = SaveDataFileParser.parseSaveFile(responseFile);
+                if (responseData != null) {
+                    showDataList.add(responseData);
                 }
                 runOnUiThread(new Runnable() {
                     @Override
@@ -93,15 +92,15 @@ public class PacketDetailActivity extends Activity {
                         pg.setVisibility(View.GONE);
                     }
                 });
-
             }
         });
     }
 
 
-    public static void startActivity(Activity context, String dir) {
+    public static void startActivity(Activity context, String dir, String uniqueName) {
         Intent intent = new Intent(context, PacketDetailActivity.class);
-        intent.putExtra(CONVERSATION_DATA, dir);
+        intent.putExtra(CONVERSATION_DIR, dir);
+        intent.putExtra(CONVERSATION_UNIQUENAME, uniqueName);
         context.startActivity(intent);
     }
 

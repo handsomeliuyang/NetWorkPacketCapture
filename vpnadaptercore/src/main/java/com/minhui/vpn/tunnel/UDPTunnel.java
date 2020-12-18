@@ -200,33 +200,33 @@ public class UDPTunnel implements KeyHandler {
                 PortHostService.getInstance().refreshSessionInfo();
             }
             //需要延迟一秒在保存 等到app信息完全刷新
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    ThreadProxy.getInstance().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (session.receiveByteNum == 0 && session.bytesSent == 0) {
-                                return;
-                            }
-
-                            String configFileDir = VPNConstants.CONFIG_DIR
-                                    + TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime);
-                            File parentFile = new File(configFileDir);
-                            if (!parentFile.exists()) {
-                                parentFile.mkdirs();
-                            }
-                            //说已经存了
-                            File file = new File(parentFile, session.getUniqueName());
-                            if (file.exists()) {
-                                return;
-                            }
-                            ACache configACache = ACache.get(parentFile);
-                            configACache.put(session.getUniqueName(), session);
-                        }
-                    });
-                }
-            }, 1000);
+//            handler.postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    ThreadProxy.getInstance().execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            if (session.receiveByteNum == 0 && session.bytesSent == 0) {
+//                                return;
+//                            }
+//
+//                            String configFileDir = VPNConstants.CONFIG_DIR
+//                                    + TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime);
+//                            File parentFile = new File(configFileDir);
+//                            if (!parentFile.exists()) {
+//                                parentFile.mkdirs();
+//                            }
+//                            //说已经存了
+//                            File file = new File(parentFile, session.getUniqueName());
+//                            if (file.exists()) {
+//                                return;
+//                            }
+//                            ACache configACache = ACache.get(parentFile);
+//                            configACache.put(session.getUniqueName(), session);
+//                        }
+//                    });
+//                }
+//            }, 1000);
         } catch (Exception e) {
             VPNLog.w(TAG, "error to close UDP channel IpAndPort" + ipAndPort + ",error is " + e.getMessage());
         }

@@ -63,6 +63,28 @@ public class PortHostService extends Service {
 
     }
 
+    public AppInfo getAppInfo(short localPort) {
+        if (isRefresh) {
+            return null;
+        }
+        isRefresh = true;
+        try {
+            NetFileManager.getInstance().refresh();
+
+            int searchPort = localPort & 0XFFFF;
+            Integer uid = NetFileManager.getInstance().getUid(searchPort);
+
+            if (uid != null) {
+                VPNLog.d(TAG, "can not find uid");
+                return AppInfo.createFromUid(VpnServiceHelper.getContext(), uid);
+            }
+        } catch (Exception e) {
+            VPNLog.d(TAG,"failed to refreshSessionInfo "+e.getMessage());
+        }
+        isRefresh = false;
+        return null;
+    }
+
     private void refreshSessionInfo(List<NatSession> netConnections) {
         if (isRefresh || netConnections == null) {
             return;

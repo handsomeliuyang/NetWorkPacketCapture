@@ -14,6 +14,12 @@ import java.util.Locale;
 public class TimeFormatUtil {
     private static DateFormat HHMMSSSFormat = new SimpleDateFormat("HH:mm:ss:s", Locale.getDefault());
     private static DateFormat formatYYMMDDHHMMSSFormat=new SimpleDateFormat("yyyy:MM:dd_HH:mm:ss:s", Locale.getDefault());
+
+    private static DateFormat formatMMDDHHMMSSFormat=new SimpleDateFormat("MM/dd HH:mm:ss", Locale.getDefault());
+    public static String formatMMDDHHMMSSMM(long time) {
+        Date date = new Date(time);
+        return formatMMDDHHMMSSFormat.format(date);
+    }
     public static String formatHHMMSSMM(long time) {
         Date date = new Date(time);
         return HHMMSSSFormat.format(date);
