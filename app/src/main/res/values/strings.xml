@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">NetworkCapture</string>
-    <string name="all">Capture all Packet</string>
+    <string name="app_name">HttpMock</string>
+    <string name="all">All Http Capture</string>
     <string name="ssl">SSL</string>
     <string name="find">Capture</string>
     <string name="history">History</string>
@@ -31,4 +31,5 @@
     <string name="no_data">Data not existed!!</string>
     <string name="show_udp">Show UDP</string>
     <string name="save_udp">Save UDP Packet</string>
+    <string name="mock_data">Mock Local Data</string>
 </resources>

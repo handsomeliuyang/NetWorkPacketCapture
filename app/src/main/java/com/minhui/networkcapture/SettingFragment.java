@@ -35,8 +35,10 @@ public class SettingFragment extends BaseFragment {
     private SharedPreferences sp;
     private CheckBox cbShowUDP;
     private CheckBox cbSaveUDP;
+    private CheckBox cbMockLocalData;
     private boolean saveUDP;
     private boolean showUDP;
+    private boolean mockLocalData;
 
     @Override
     int getLayout() {
@@ -65,11 +67,14 @@ public class SettingFragment extends BaseFragment {
         });
         cbShowUDP = view.findViewById(R.id.show_udp);
         cbSaveUDP = view.findViewById(R.id.save_udp);
+        cbMockLocalData = view.findViewById(R.id.mock_data);
         sp = getContext().getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
         saveUDP = sp.getBoolean(VPNConstants.IS_UDP_NEED_SAVE, false);
         showUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
+        mockLocalData = sp.getBoolean(VPNConstants.IS_MOCK_LOCAL_DATA, false);
         cbSaveUDP.setChecked(saveUDP);
         cbShowUDP.setChecked(showUDP);
+        cbMockLocalData.setChecked(mockLocalData);
         cbShowUDP.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -82,6 +87,13 @@ public class SettingFragment extends BaseFragment {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 saveUDP = isChecked;
                 sp.edit().putBoolean(VPNConstants.IS_UDP_NEED_SAVE, saveUDP).apply();
+            }
+        });
+        cbMockLocalData.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mockLocalData = isChecked;
+                sp.edit().putBoolean(VPNConstants.IS_MOCK_LOCAL_DATA, mockLocalData).apply();
             }
         });
         includeCurrentCapture = view.findViewById(R.id.check_current_capture);

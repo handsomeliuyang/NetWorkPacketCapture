@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">抓包精灵</string>
-    <string name="all">抓所有的包</string>
+    <string name="app_name">HttpMock</string>
+    <string name="all">抓取所有的Http</string>
     <string name="ssl">SSL</string>
     <string name="find">抓包</string>
     <string name="history">记录</string>
@@ -32,4 +32,5 @@
     <string name="no_data">数据不存在!!</string>
     <string name="show_udp">显示UDP数据</string>
     <string name="save_udp">保存UDP数据</string>
+    <string name="mock_data">Mock本地数据</string>
 </resources>

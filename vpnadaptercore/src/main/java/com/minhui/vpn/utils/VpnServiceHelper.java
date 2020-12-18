@@ -83,6 +83,10 @@ public class VpnServiceHelper {
         sp = context.getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
         return sp.getBoolean(VPNConstants.IS_UDP_NEED_SAVE, false);
     }
+    public static boolean isMockLocalData(){
+        sp = context.getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
+        return sp.getBoolean(VPNConstants.IS_MOCK_LOCAL_DATA, false);
+    }
 
     public static boolean protect(Socket socket) {
         if (sVpnService != null) {

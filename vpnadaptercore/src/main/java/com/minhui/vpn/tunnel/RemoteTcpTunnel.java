@@ -15,6 +15,7 @@ import com.minhui.vpn.utils.ACache;
 import com.minhui.vpn.utils.TcpDataSaveHelper;
 import com.minhui.vpn.utils.ThreadProxy;
 import com.minhui.vpn.utils.TimeFormatUtil;
+import com.minhui.vpn.utils.VpnServiceHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,26 +29,26 @@ import java.util.Date;
  * Created by zengzheying on 15/12/31.
  */
 public class RemoteTcpTunnel extends RawTcpTunnel {
-    TcpDataSaveHelper helper;
+//    TcpDataSaveHelper helper;
     NatSession session;
     private final Handler handler;
     private String namePre;
-    private SimpleDateFormat DATA_FORMAT = new SimpleDateFormat("dd_HH_mm_ss_SSS");
+    private final boolean isMockLocalData;
+//    private SimpleDateFormat DATA_FORMAT = new SimpleDateFormat("dd_HH_mm_ss_SSS");
 
     public RemoteTcpTunnel(InetSocketAddress serverAddress, Selector selector, short portKey) throws IOException {
         super(serverAddress, selector, portKey);
         session = NatSessionManager.getSession(portKey);
-        String helperDir = new StringBuilder()
-                .append(VPNConstants.DATA_DIR)
-                .append(TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime))
-//                .append("/")
-//                .append(session.getUniqueName())
-                .toString();
+//        String helperDir = new StringBuilder()
+//                .append(VPNConstants.DATA_DIR)
+//                .append(TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime))
+//                .toString();
 
-        helper = new TcpDataSaveHelper(helperDir);
+//        helper = new TcpDataSaveHelper(helperDir);
+        isMockLocalData = VpnServiceHelper.isMockLocalData();
         handler = new Handler(Looper.getMainLooper());
 
-        VPNLog.d(this.getClass().getSimpleName(), "***** Save helper " + helper.toString());
+//        VPNLog.d(this.getClass().getSimpleName(), "***** Save helper " + helper.toString());
     }
 
 
@@ -55,15 +56,6 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
     protected ByteBuffer afterReceived(ByteBuffer buffer) throws Exception {
         buffer = super.afterReceived(buffer);
         refreshSessionAfterRead(buffer.limit());
-//        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
-//                .SaveData
-//                .Builder()
-//                .namePre(namePre)
-//                .isRequest(false)
-//                .needParseData(buffer.array())
-//                .length(buffer.limit())
-//                .offSet(0)
-//                .build();
 
         HttpCachManager.HttpData httpData = new HttpCachManager
                 .HttpData
@@ -81,7 +73,6 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
                 .build();
         HttpCachManager.saveHttpData(httpData);
 
-//        helper.addData(saveData);
         return buffer;
     }
 
@@ -93,18 +84,7 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
         }
 
         namePre = Uri.encode(session.getRequestUrl().split("\\?")[0]); // DATA_FORMAT.format(new Date());
-//        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
-//                .SaveData
-//                .Builder()
-//                .namePre(namePre)
-//                .isRequest(true)
-//                .needParseData(buffer.array())
-//                .length(buffer.limit())
-//                .offSet(0)
-//                .build();
 
-        // 保存请求的Request数据，用于显示详情
-//        helper.addData(saveData);
         // 保存此Http请求的信息，用于列表显示
         HttpCachManager.HttpData httpData = new HttpCachManager
             .HttpData
@@ -122,19 +102,7 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
             .build();
 
         // 走本地缓存，本地加载Response，直接返回，不再向RemoteServer发送数据
-//        if(helper.existResponse(saveData)) {
-//            // 加载本地response缓存，直接返回
-//            ByteBuffer responseBuffer = helper.loadCashedResponse(saveData);
-//            responseBuffer.flip();
-//            this.sendToBrother(null, responseBuffer);
-//
-//            VPNLog.d(this.getClass().getSimpleName(), "***** has response " + responseBuffer);
-//
-//            // 不再加密，也不发数据
-//            buffer.clear();
-//            return buffer;
-//        }
-        if(HttpCachManager.existResponse(httpData)){
+        if(isMockLocalData && HttpCachManager.existResponse(httpData)){
             // 加载本地response缓存，直接返回
             ByteBuffer responseBuffer = HttpCachManager.loadCashedResponse(httpData);
             responseBuffer.flip();
@@ -146,8 +114,8 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
             buffer.clear();
             return buffer;
         }
-        HttpCachManager.saveHttpData(httpData);
 
+        HttpCachManager.saveHttpData(httpData);
         refreshAppInfo();
         // 先保存再加密
         buffer = super.beforeSend(buffer);
@@ -169,10 +137,8 @@ public class RemoteTcpTunnel extends RawTcpTunnel {
     }
 
     private void refreshSessionAfterRead(int size) {
-
         session.receivePacketNum++;
         session.receiveByteNum += size;
-
     }
 
     @Override

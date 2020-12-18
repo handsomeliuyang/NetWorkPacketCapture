@@ -16,6 +16,7 @@ public interface VPNConstants {
     String VPN_SP_NAME="vpn_sp_name";
     String IS_UDP_NEED_SAVE="isUDPNeedSave";
     String IS_UDP_SHOW = "isUDPShow";
+    String IS_MOCK_LOCAL_DATA = "isMockLocalData";
     String DEFAULT_PACKAGE_ID = "default_package_id";
     String DEFAULT_PACAGE_NAME = "default_package_name";
 }
