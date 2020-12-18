@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">HttpMock</string>
     <string name="all">All Http Capture</string>
+    <string name="no_app">Please Change App</string>
     <string name="ssl">SSL</string>
     <string name="find">Capture</string>
     <string name="history">History</string>

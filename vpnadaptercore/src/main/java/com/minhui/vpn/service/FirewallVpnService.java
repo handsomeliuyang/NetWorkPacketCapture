@@ -386,8 +386,7 @@ public class FirewallVpnService extends VpnService implements Runnable {
         Builder builder = new Builder();
         builder.setMtu(MUTE_SIZE);
         // TODO-ly 方便测试，指定抓取的包名
-//        selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
-        selectPackage = "com.ly.studydemo";
+        selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
         DebugLog.i("setMtu: %d\n", ProxyConfig.Instance.getMTU());
 
         ProxyConfig.IPAddress ipAddress = ProxyConfig.Instance.getDefaultLocalIP();

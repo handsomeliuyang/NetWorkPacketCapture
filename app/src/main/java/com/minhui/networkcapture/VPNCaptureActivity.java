@@ -85,11 +85,13 @@ public class VPNCaptureActivity extends FragmentActivity {
         vpnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-              if(VpnServiceHelper.vpnRunningStatus()){
-                  closeVpn();
-              }else {
-                  startVPN();
-              }
+                if (VpnServiceHelper.vpnRunningStatus()) {
+                    closeVpn();
+                } else {
+                    if(selectPackage != null) {
+                        startVPN();
+                    }
+                }
             }
         });
         packageId = (TextView) findViewById(R.id.package_id);
@@ -98,7 +100,7 @@ public class VPNCaptureActivity extends FragmentActivity {
         selectPackage = sharedPreferences.getString(DEFAULT_PACKAGE_ID, null);
         selectName = sharedPreferences.getString(DEFAULT_PACAGE_NAME, null);
         packageId.setText(selectName != null ? selectName :
-                selectPackage != null ? selectPackage : getString(R.string.all));
+                selectPackage != null ? selectPackage : getString(R.string.no_app));
         vpnButton.setEnabled(true);
         ProxyConfig.Instance.registerVpnStatusListener(vpnStatusListener);
         //  summerState = findViewById(R.id.summer_state);
@@ -290,21 +292,14 @@ public class VPNCaptureActivity extends FragmentActivity {
         if (requestCode == START_VPN_SERVICE_REQUEST_CODE && resultCode == RESULT_OK) {
           VpnServiceHelper.startVpnService(getApplicationContext());
         } else if (requestCode == REQUEST_PACKAGE && resultCode == RESULT_OK) {
-            PackageShowInfo showInfo = (PackageShowInfo) data.getParcelableExtra(PackageListActivity.SELECT_PACKAGE);
-            if (showInfo == null) {
-                selectPackage = null;
-                selectName = null;
-            } else {
-                selectPackage = showInfo.packageName;
-                selectName = showInfo.appName;
-            }
+            selectPackage =data.getStringExtra(PackageListActivity.SELECT_PACKAGE);
+            selectName = data.getStringExtra(PackageListActivity.SELECT_PACKAGE_NAME);
+
             packageId.setText(selectName != null ? selectName :
-                    selectPackage != null ? selectPackage : getString(R.string.all));
+                    selectPackage != null ? selectPackage : getString(R.string.no_app));
             vpnButton.setEnabled(true);
             sharedPreferences.edit().putString(DEFAULT_PACKAGE_ID, selectPackage)
                     .putString(DEFAULT_PACAGE_NAME, selectName).apply();
         }
     }
-
-
 }

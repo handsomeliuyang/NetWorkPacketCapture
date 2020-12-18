@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
@@ -21,11 +22,11 @@ import java.util.List;
  *         Copyright © 2017年 Oceanwing. All rights reserved.
  */
 
-public class PackageShowInfo implements Parcelable {
+public class PackageShowInfo {
     private static final java.lang.String NO_APP_NAME = "COM.";
     String appName;
     String packageName;
-    public ApplicationInfo applicationInfo;
+    Drawable iconDrawable;
 
     public static List<PackageShowInfo> getPackageShowInfo(Context context) {
         ArrayList<PackageShowInfo> showInfos = new ArrayList<>();
@@ -35,12 +36,9 @@ public class PackageShowInfo implements Parcelable {
         for (PackageInfo info : installedPackages) {
             PackageShowInfo packageShowInfo = new PackageShowInfo();
             packageShowInfo.packageName = info.packageName;
-
+            packageShowInfo.iconDrawable = info.applicationInfo.loadIcon(context.getPackageManager());
             packageShowInfo.appName = (String) info.applicationInfo.loadLabel(packageManager);
-
-            packageShowInfo.applicationInfo = info.applicationInfo;
             showInfos.add(packageShowInfo);
-
         }
 
         Collections.sort(showInfos, new Comparator<PackageShowInfo>() {
@@ -72,37 +70,4 @@ public class PackageShowInfo implements Parcelable {
 
         return showInfos;
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.appName);
-        dest.writeString(this.packageName);
-        dest.writeParcelable(this.applicationInfo, flags);
-    }
-
-    public PackageShowInfo() {
-    }
-
-    protected PackageShowInfo(Parcel in) {
-        this.appName = in.readString();
-        this.packageName = in.readString();
-        this.applicationInfo = in.readParcelable(ApplicationInfo.class.getClassLoader());
-    }
-
-    public static final Creator<PackageShowInfo> CREATOR = new Creator<PackageShowInfo>() {
-        @Override
-        public PackageShowInfo createFromParcel(Parcel source) {
-            return new PackageShowInfo(source);
-        }
-
-        @Override
-        public PackageShowInfo[] newArray(int size) {
-            return new PackageShowInfo[size];
-        }
-    };
 }

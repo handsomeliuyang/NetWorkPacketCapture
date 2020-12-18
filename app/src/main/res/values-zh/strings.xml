@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">HttpMock</string>
     <string name="all">抓取所有的Http</string>
+    <string name="no_app">请选择App</string>
     <string name="ssl">SSL</string>
     <string name="find">抓包</string>
     <string name="history">记录</string>
