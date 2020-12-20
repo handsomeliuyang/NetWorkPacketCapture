@@ -52,7 +52,7 @@ public class PacketDetailActivity extends Activity {
         uniqueName = getIntent().getStringExtra(CONVERSATION_UNIQUENAME);
         pg = findViewById(R.id.pg);
         sp = getSharedPreferences(AppConstants.DATA_SAVE, MODE_PRIVATE);
-        sp.edit().putBoolean(AppConstants.HAS_FULL_USE_APP, true).apply();
+//        sp.edit().putBoolean(AppConstants.HAS_FULL_USE_APP, true).apply();
         refreshView();
     }
 

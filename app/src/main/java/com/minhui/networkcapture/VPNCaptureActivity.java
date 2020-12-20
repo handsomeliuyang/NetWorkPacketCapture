@@ -36,6 +36,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.minhui.vpn.ProxyConfig;
 import com.minhui.vpn.utils.VpnServiceHelper;
@@ -49,7 +50,7 @@ import static com.minhui.vpn.utils.VpnServiceHelper.START_VPN_SERVICE_REQUEST_CO
 public class VPNCaptureActivity extends FragmentActivity {
     private static final int VPN_REQUEST_CODE = 101;
     private static final int REQUEST_PACKAGE = 103;
-    private static final int REQUEST_STORAGE_PERMISSION = 104;
+//    private static final int REQUEST_STORAGE_PERMISSION = 104;
     private static String TAG = "VPNCaptureActivity";
 
     ProxyConfig.VpnStatusListener vpnStatusListener = new ProxyConfig.VpnStatusListener() {
@@ -87,11 +88,13 @@ public class VPNCaptureActivity extends FragmentActivity {
             public void onClick(View v) {
                 if (VpnServiceHelper.vpnRunningStatus()) {
                     closeVpn();
-                } else {
-                    if(selectPackage != null) {
-                        startVPN();
-                    }
+                    return ;
                 }
+                if(selectPackage == null) {
+                    Toast.makeText(VPNCaptureActivity.this, getString(R.string.no_app), Toast.LENGTH_SHORT).show();
+                    return ;
+                }
+                startVPN();
             }
         });
         packageId = (TextView) findViewById(R.id.package_id);
@@ -115,94 +118,94 @@ public class VPNCaptureActivity extends FragmentActivity {
         initViewPager();
         initTab();
         //推荐用户进行留评
-        boolean hasFullUseApp = sharedPreferences.getBoolean(AppConstants.HAS_FULL_USE_APP, false);
-        if (hasFullUseApp) {
-            boolean hasShowRecommand = sharedPreferences.getBoolean(AppConstants.HAS_SHOW_RECOMMAND, false);
-            if (!hasShowRecommand) {
-                sharedPreferences.edit().putBoolean(AppConstants.HAS_SHOW_RECOMMAND, true).apply();
-                showRecommand();
-            } else {
-                requestStoragePermission();
-            }
-
-        } else {
-            requestStoragePermission();
-        }
+//        boolean hasFullUseApp = sharedPreferences.getBoolean(AppConstants.HAS_FULL_USE_APP, false);
+//        if (hasFullUseApp) {
+//            boolean hasShowRecommand = sharedPreferences.getBoolean(AppConstants.HAS_SHOW_RECOMMAND, false);
+//            if (!hasShowRecommand) {
+//                sharedPreferences.edit().putBoolean(AppConstants.HAS_SHOW_RECOMMAND, true).apply();
+//                showRecommand();
+//            } else {
+//                requestStoragePermission();
+//            }
+//
+//        } else {
+//            requestStoragePermission();
+//        }
         handler = new Handler();
     }
 
-    private void requestStoragePermission() {
-        ActivityCompat.requestPermissions(this, needPermissions, REQUEST_STORAGE_PERMISSION);
-    }
+//    private void requestStoragePermission() {
+//        ActivityCompat.requestPermissions(this, needPermissions, REQUEST_STORAGE_PERMISSION);
+//    }
 
-    private void showRecommand() {
-        new AlertDialog
-                .Builder(this)
-                .setTitle(getString(R.string.do_you_like_the_app))
-                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        showGotoStarDialog();
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        showGotoDiscussDialog();
-                        dialog.dismiss();
-                    }
+//    private void showRecommand() {
+//        new AlertDialog
+//                .Builder(this)
+//                .setTitle(getString(R.string.do_you_like_the_app))
+//                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        showGotoStarDialog();
+//                        dialog.dismiss();
+//                    }
+//                })
+//                .setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        showGotoDiscussDialog();
+//                        dialog.dismiss();
+//                    }
+//
+//                })
+//                .show();
+//
+//
+//    }
 
-                })
-                .show();
+//    private void showGotoStarDialog() {
+//        new AlertDialog
+//                .Builder(this)
+//                .setTitle(getString(R.string.do_you_want_star))
+//                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        String url = "https://github.com/huolizhuminh/NetWorkPacketCapture";
+//
+//                        launchBrowser(url);
+//                        dialog.dismiss();
+//                    }
+//                })
+//                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.dismiss();
+//                    }
+//
+//                })
+//                .show();
+//    }
 
-
-    }
-
-    private void showGotoStarDialog() {
-        new AlertDialog
-                .Builder(this)
-                .setTitle(getString(R.string.do_you_want_star))
-                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String url = "https://github.com/huolizhuminh/NetWorkPacketCapture";
-
-                        launchBrowser(url);
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-
-                })
-                .show();
-    }
-
-    private void showGotoDiscussDialog() {
-        new AlertDialog
-                .Builder(this)
-                .setTitle(getString(R.string.go_to_give_the_issue))
-                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String url = "https://github.com/huolizhuminh/NetWorkPacketCapture/issues";
-                        launchBrowser(url);
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-
-                })
-                .show();
-    }
+//    private void showGotoDiscussDialog() {
+//        new AlertDialog
+//                .Builder(this)
+//                .setTitle(getString(R.string.go_to_give_the_issue))
+//                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        String url = "https://github.com/huolizhuminh/NetWorkPacketCapture/issues";
+//                        launchBrowser(url);
+//                        dialog.dismiss();
+//                    }
+//                })
+//                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.dismiss();
+//                    }
+//
+//                })
+//                .show();
+//    }
 
     public void launchBrowser(String url) {
         Intent intent = new Intent(Intent.ACTION_VIEW);

@@ -3,6 +3,8 @@ package com.minhui.networkcapture;
 import android.app.Application;
 import android.content.Context;
 
+import com.minhui.vpn.VPNConstants;
+
 
 /**
  * @author minhui.zhu
@@ -13,6 +15,13 @@ import android.content.Context;
 public class MyApplication extends Application {
     public static final String BUGLY_ID="6c905fa4a7";
     private static  Context context;
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        VPNConstants.initBaseDir(this);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
